@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 
 
 export const teachersSchema = new mongoose.Schema({
@@ -10,12 +11,21 @@ export const teachersSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-    lowercase: true,
     trim: true,
   },
   number : {
     type: String,
     required: true,
+    trim: true,
+  },
+  subject : {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  profilePicture : {
+    type: String,
+    required: false,
     trim: true,
   },
   attendance : {
@@ -24,7 +34,7 @@ export const teachersSchema = new mongoose.Schema({
   },
   certificate : {
     type: String,
-    required: true,
+    required: false,
     trim: true,
   }
 }, {

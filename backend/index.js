@@ -3,6 +3,7 @@ import dotenv from "dotenv"
 import cors from "cors"
 import { connectDb } from "./lib/connectdb.js"
 import AuthRouter from "./routes/authRoute.js"
+import TeacherRouter from "./routes/teacherRoute.js"
 import cookieParser from "cookie-parser";
 dotenv.config()
 const app = express()
@@ -18,6 +19,7 @@ app.use(express.urlencoded({ extended: true }))
 
 
 app.use("/api/auth", AuthRouter);
+app.use("/api/teachers", TeacherRouter);
 
 
 
