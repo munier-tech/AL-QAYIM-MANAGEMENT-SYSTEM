@@ -1,95 +1,188 @@
-import Student from "../models/studentModel.js";
+import Student from "../models/studentsModel.js";
 
-// Create a new student
+// 1. Create Student
 export const createStudent = async (req, res) => {
   try {
-    const { name, age, gender, class: className, motherNumber, fatherNumber } = req.body;
+    const { fullname, age, gender, classId, motherNumber, fatherNumber } = req.body;
 
-    if (!name || !className || !motherNumber || !fatherNumber) {
-      return res.status(400).json({ message: "Required fields are missing." });
+    if (!fullname || !motherNumber || !fatherNumber) {
+      return res.status(400).json({ message: "Required fields missing" });
     }
 
     const student = new Student({
-      name,
+      fullname,
       age,
       gender,
-      class: className,
+      class: classId || null, 
       motherNumber,
-      fatherNumber,
+      fatherNumber
     });
 
     await student.save();
     res.status(201).json({ message: "Student created successfully", student });
   } catch (error) {
-    console.error("Error creating student:", error);
+    console.error("Error in createStudent:", error);
     res.status(500).json({ message: error.message });
   }
 };
 
-// Get all students
+// 2. Get All Students
 export const getAllStudents = async (req, res) => {
   try {
-    const students = await Student.find().sort({ createdAt: -1 });
-    res.status(200).json({ students });
+    const student = await Student.find().populate("class").sort({ createdAt: -1 });
+    res.status(200).json({ students : student });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Get single student by ID
+// 3. Get Student By ID
 export const getStudentById = async (req, res) => {
   try {
     const { studentId } = req.params;
+    const student = await Student.findById(studentId).populate("class");
 
-    const student = await Student.findById(studentId)
-      .populate("healthRecords")
-      .populate("examRecords")
-      .populate("disciplineReports");
+    if (!student) return res.status(404).json({ message: "Student not found" });
+
+    res.status(200).json({ students : student });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// 4. Update Student
+export const updateStudent = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const { fullname, age, gender, classId, motherNumber, fatherNumber } = req.body;
+
+    const updated = await Student.findByIdAndUpdate(
+      studentId,
+      {
+        fullname, age, gender, class: classId, motherNumber, fatherNumber
+      },
+      { new: true }
+    );
+
+    if (!updated) return res.status(404).json({ message: "Student not found" });
+
+    res.status(200).json({ message: "Student updated", student: updated });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// 5. Delete Student
+export const deleteStudent = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const deleted = await Student.findByIdAndDelete(studentId);
+
+    if (!deleted) return res.status(404).json({ message: "Student not found" });
+
+    res.status(200).json({ message: "Student deleted" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// 6. Assign Student to a Class
+export const assignStudentToClass = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const { classId } = req.body;
+
+    const student = await Student.findByIdAndUpdate(
+      studentId,
+      { class: classId },
+      { new: true }
+    );
+
+    res.status(200).json({ message: "Class assigned", student });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// 8. Track or Update Fee Payment
+export const trackFeePayment = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const { total, paid } = req.body;
+
+    const student = await Student.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    // Update fee values
+    if (total !== undefined) student.fee.total = total;
+    if (paid !== undefined) student.fee.paid += paid;
+
+    await student.save();
+
+    res.status(200).json({ message: "Fee payment updated", fee: student.fee });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getFeeStatus = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const student = await Student.findById(studentId);
 
     if (!student) {
       return res.status(404).json({ message: "Student not found" });
     }
 
-    res.status(200).json({ student });
+    const { total, paid } = student.fee;
+    const balance = total - paid;
+
+    res.status(200).json({
+      feeStatus: {
+        total,
+        paid,
+        balance,
+        status: balance === 0 ? "Paid" : balance < 0 ? "Overpaid" : "Pending"
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Update student info
-export const updateStudent = async (req, res) => {
+export const updateFeeInfo = async (req, res) => {
   try {
     const { studentId } = req.params;
-    const { name, age, gender, class: className, motherNumber, fatherNumber } = req.body;
+    const { total, paid } = req.body;
 
-    const updatedStudent = await Student.findByIdAndUpdate(
-      studentId,
-      { name, age, gender, class: className, motherNumber, fatherNumber },
-      { new: true }
-    );
+    const student = await Student.findById(studentId);
+    if (!student) return res.status(404).json({ message: "Student not found" });
 
-    if (!updatedStudent) {
-      return res.status(404).json({ message: "Student not found" });
-    }
+    // Directly update (replaces existing values)
+    if (total !== undefined) student.fee.total = total;
+    if (paid !== undefined) student.fee.paid = paid;
 
-    res.status(200).json({ message: "Student updated", student: updatedStudent });
+    await student.save();
+
+    res.status(200).json({ message: "Fee information updated", fee: student.fee });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
-
-// Delete student
-export const deleteStudent = async (req, res) => {
+export const deleteFeeInfo = async (req, res) => {
   try {
     const { studentId } = req.params;
 
-    const deletedStudent = await Student.findByIdAndDelete(studentId);
+    const student = await Student.findById(studentId);
+    if (!student) return res.status(404).json({ message: "Student not found" });
 
-    if (!deletedStudent) {
-      return res.status(404).json({ message: "Student not found" });
-    }
+    student.fee = { total: 0, paid: 0 };
 
-    res.status(200).json({ message: "Student deleted successfully" });
+    await student.save();
+
+    res.status(200).json({ message: "Fee information reset successfully", fee: student.fee });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const studentSchema = new mongoose.Schema({
-  name: {
+  fullname: {
     type: String,
     required: true,
   },
@@ -12,7 +12,17 @@ const studentSchema = new mongoose.Schema({
   },
   class: {
     type: mongoose.Schema.Types.ObjectId,
-    required: true,
+    required: false,
+  },
+  fee: {
+  total: {
+     type: Number,
+     default: 0
+   },
+  paid: { 
+    type: Number,
+    default: 0
+   }
   },
    motherNumber: {
     type: String,
