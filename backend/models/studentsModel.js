@@ -13,6 +13,7 @@ const studentSchema = new mongoose.Schema({
   class: {
     type: mongoose.Schema.Types.ObjectId,
     required: false,
+    ref: "Class",
   },
   fee: {
   total: {

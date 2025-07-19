@@ -9,6 +9,16 @@ export const createStudent = async (req, res) => {
       return res.status(400).json({ message: "Required fields missing" });
     }
 
+    if (age < 0) {
+      return res.status(400).json({ message: "Invalid age" });
+    }
+
+    const existedFullname = await Student.findOne({ fullname });
+
+    if (existedFullname) {
+      return res.status(400).json({ message: "Student with this name already exists" });
+    }
+
     const student = new Student({
       fullname,
       age,
@@ -27,7 +37,7 @@ export const createStudent = async (req, res) => {
 };
 
 // 2. Get All Students
-export const getAllStudents = async (req, res) => {
+export const getAllStudents = async (req , res) => {
   try {
     const student = await Student.find().populate("class").sort({ createdAt: -1 });
     res.status(200).json({ students : student });
@@ -40,11 +50,11 @@ export const getAllStudents = async (req, res) => {
 export const getStudentById = async (req, res) => {
   try {
     const { studentId } = req.params;
-    const student = await Student.findById(studentId).populate("class");
+    const student = await Student.findById(studentId).populate("class name level students");
 
     if (!student) return res.status(404).json({ message: "Student not found" });
 
-    res.status(200).json({ students : student });
+    res.status(200).json({ students : student  });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -90,7 +100,7 @@ export const deleteStudent = async (req, res) => {
 export const assignStudentToClass = async (req, res) => {
   try {
     const { studentId } = req.params;
-    const { classId } = req.body;
+    const { classId } = req.params;
 
     const student = await Student.findByIdAndUpdate(
       studentId,

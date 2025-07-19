@@ -22,7 +22,7 @@ router.put("/update/:studentId", updateStudent);
 router.delete("/delete/:studentId", deleteStudent);
 
 // Class assignment
-router.patch("/assign-class/:studentId", assignStudentToClass);
+router.post("/:studentId/:classId", assignStudentToClass);
 
 // Fee management (🟡 made consistent by placing studentId at end)
 router.patch("/track-fee/:studentId", trackFeePayment);      
